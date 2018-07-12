@@ -22,3 +22,6 @@ Route::post('/ticket/creation','TicketController@create')->name('post-create-tic
 Route::get('/ticket/{id}/edition','TicketController@updateForm')->name('update-ticket');
 Route::post('/ticket/{id}/edition','TicketController@update')->name('post-update-ticket');
 Route::get('/ticket/{id}/suppression', 'TicketController@delete')->name('delete-ticket');
+Route::get('/tickets/import', 'TicketController@importForm')->name('import-tickets');
+Route::post('/tickets/import', 'TicketController@import')->name('post-import-tickets');
+Route::get('/tickets/statistique', 'TicketController@statistique')->name('stat-tickets');

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Http\Requests\TicketRequest;
 use Carbon\Carbon;
+use App\Http\Requests\ImportTicketsRequest;
+use DB;
 
 class TicketController extends Controller {
     
@@ -148,5 +150,80 @@ class TicketController extends Controller {
            
            return redirect()->route('list-tickets');
        }
+   }
+   
+   /**
+    * Display Form to Import Tickets
+    * @return Response
+    */
+   public function importForm() {
+       
+       return view('ticket.import');
+   }
+   
+   /**
+    * Import tickets
+    * @param ImportTicketsRequest $request
+    * @return Response
+    */
+   public function import(ImportTicketsRequest $request) {
+       
+       $file = $request->file('csv_file');
+       $file->move(public_path().'/uploads/', $file->getClientOriginalName());
+       
+       $datas = array_map('str_getcsv', file(url('/').'/uploads/'.$file->getClientOriginalName()));
+       $nb_ligne_lu = 1;
+       $datas_ticket = array();
+       
+       foreach($datas as $data) {
+           
+           if($nb_ligne_lu < 4) {
+               
+               $nb_ligne_lu++;
+               continue;
+           }
+           
+           $data = explode(';', $data[0]);
+                          
+           $data_ticket = array(
+               'account_invoice' => $data[0],
+               'invoice_id' => $data[1],
+               'customer_id' => $data[2],
+               'date' => Carbon::createFromFormat('d/m/Y', $data[3])->format('Y-m-d'),
+               'time' => $data[4],
+               'type' => utf8_encode($data[7]),
+           );
+           
+           if(strlen($data[5]) === 8) {
+               
+               $data_ticket['duration'] = $data[5];
+               $data_ticket['duration_invoice'] = $data[6];
+           }
+           elseif(!empty($data[5])) {
+              
+               $data_ticket['weight'] = $data[5];
+               $data_ticket['weight_invoice'] = $data[6];
+           }
+           
+           $datas_ticket[] = $data_ticket;
+       }
+       
+       $datas_ticket_chunk = array_chunk($datas_ticket,  5);
+       
+       foreach($datas_ticket_chunk as $data_ticket_chunck) {
+        
+           $this->ticket->insert($data_ticket_chunck);
+           
+       }
+   }
+   
+   /**
+    * Display Statistique
+    * @return Response
+    */
+   public function statistique() {
+       
+       $total_duration = DB::table('tickets')->selectRaw("sum(duration)")->where('type', 'like', '%appel%')->get();
+       $number_ticket_sms = $this->ticket->where('type', 'like', '%sms%')->get()->count();
    }
 }

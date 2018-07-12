@@ -20,7 +20,7 @@ class Ticket extends Model {
     protected $fillable = array(
         
         'account_invoice', 'invoice_id', 'customer_id', 'date', 
-        'time', 'duration', 'duration_invoice', 'type',
+        'time', 'duration', 'duration_invoice', 'weight', 'weight_invoice', 'type',
     );
     
     
